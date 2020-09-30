@@ -36,3 +36,17 @@ This project is a final project in a cyber course.
 
 ## How To Use:
 run:  sudo Python3 main.py
+
+## References:
+
+https://www.thepythoncode.com/code/building-wifi-scanner-in-python-scapy
+
+https://www.thepythoncode.com/article/building-wifi-scanner-in-python-scapy
+
+https://www.digitalwhisper.co.il/files/Zines/0x22/DW34-4-EvilTwinAttacks.pdf
+
+https://rootsh3ll.com/evil-twin-attack/
+
+https://duthcode.com/Blog/blogPostContent.php?post=deauthentication-attack-using-kali-linux-18
+
+https://www.pentesteracademy.com/course?id=14
