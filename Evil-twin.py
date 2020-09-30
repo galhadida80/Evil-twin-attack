@@ -61,7 +61,7 @@ def scan_networks(pkt):
 
 # The function check tha packets if there are a packet with the same mac as source MAC or Access Point
 # Mac and then check if the device Mac is connect to the Access Point
-def only_clients(pkt):
+def find_connected_devices(pkt):
     if (pkt.addr2 == target_mac or pkt.addr3 == target_mac) and \
             pkt.addr1 != "ff:ff:ff:ff:ff:ff":
         if pkt.addr1 not in client_list:
@@ -71,7 +71,7 @@ def only_clients(pkt):
                 window.refresh()
 
 
-def scan_clients():
+def scan_devices():
     global target_mac
     global search_timeout
     global start_scan
@@ -89,7 +89,7 @@ def scan_clients():
     channel_changer.start()
 
     try:
-        sniff(iface=monitor_interface, prn=only_clients, timeout=search_timeout)
+        sniff(iface=monitor_interface, prn=find_connected_devices, timeout=search_timeout)
     except Exception as e:
         print('Exception:', e)
     channel_changer.join()
@@ -283,7 +283,7 @@ def main():
             window.close()
             timer_is_running = True
 
-            thread_side(scan_clients)  # find all connected devices to the selected AP
+            thread_side(scan_devices)  # find all connected devices to the selected AP
             window = sg.Window('evil-twin attack', layout_choose_from_client_list(), finalize=True)
 
         if event == 'rescan':
@@ -292,7 +292,7 @@ def main():
                 thread_side(APs_scanner)
             if mode_layout == "client":
                 timer_is_running = True
-                thread_side(scan_clients)
+                thread_side(scan_devices)
 
         if timer_is_running:
             time.sleep(0.2)
