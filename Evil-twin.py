@@ -221,7 +221,7 @@ def fake_ap():
     global ap_interface
     global ap
     network_name = ap[0][0]
-    os.system("python3 Create_fake_AP.py " + ap_interface + " " + network_name)
+    os.system("python3 fake_AP.py " + ap_interface + " " + network_name)
 
 
 # The function attack the device
